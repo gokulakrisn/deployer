@@ -1,0 +1,107 @@
+name: Release
+
+on:
+  push:
+    branches:
+      - feature/mvp-compose-cli
+    tags:
+      - 'v*'
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    if: github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feature/mvp-compose-cli')
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+          - os: macos-15-intel
+            target: x86_64-apple-darwin
+          - os: macos-latest
+            target: aarch64-apple-darwin
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+      - name: Build release binary
+        run: cargo build --release --target ${{ matrix.target }}
+      - name: Package Unix binary
+        if: runner.os != 'Windows'
+        shell: bash
+        run: tar -czf deployer-${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release deployer
+      - name: Package Windows binary
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Compress-Archive -Path target/${{ matrix.target }}/release/deployer.exe -DestinationPath deployer-${{ matrix.target }}.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: deployer-${{ matrix.target }}
+          path: |
+            deployer-*.tar.gz
+            deployer-*.zip
+          if-no-files-found: error
+
+  publish:
+    if: github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feature/mvp-compose-cli')
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: deployer-*
+          merge-multiple: true
+          path: dist
+      - name: Create checksums
+        shell: bash
+        run: |
+          cd dist
+          sha256sum deployer-* > SHA256SUMS
+      - name: Select release tag
+        id: release
+        env:
+          REF_TYPE: ${{ github.ref_type }}
+          EVENT_NAME: ${{ github.event_name }}
+          REF_NAME: ${{ github.ref_name }}
+          RUN_NUMBER: ${{ github.run_number }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        shell: bash
+        run: |
+          if [[ "$EVENT_NAME" != "pull_request" && "$REF_TYPE" == "tag" ]]; then
+            echo "tag=$REF_NAME" >> "$GITHUB_OUTPUT"
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=v0.1.0-rc.$RUN_NUMBER.$RUN_ATTEMPT" >> "$GITHUB_OUTPUT"
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          fi
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs.tag }}
+          PRERELEASE: ${{ steps.release.outputs.prerelease }}
+          SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        shell: bash
+        run: |
+          args=(--title "$RELEASE_TAG" --notes "Built from commit $SHA")
+          if [[ "$PRERELEASE" == "true" ]]; then
+            args+=(--prerelease --target "$SHA")
+          fi
+          gh release create "$RELEASE_TAG" dist/* "${args[@]}"
