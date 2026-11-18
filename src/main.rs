@@ -1,13 +1,21 @@
 use anyhow::{bail, Context, Result};
 use clap::{Parser, Subcommand};
 use serde_yaml::{Mapping, Value};
-use std::{fs, path::{Path, PathBuf}, process::{Command, ExitCode}};
+use std::{
+    fs,
+    path::{Path, PathBuf},
+    process::{Command, ExitCode},
+};
 
 const HEADER: &str = "# Managed by deployer CLI - DO NOT EDIT MANUALLY";
 const GENERATED: &str = ".deployer/compose.generated.yml";
 
 #[derive(Parser)]
-#[command(name = "deployer", version, about = "Multi-environment Docker Compose wrapper")]
+#[command(
+    name = "deployer",
+    version,
+    about = "Multi-environment Docker Compose wrapper"
+)]
 struct Cli {
     #[command(subcommand)]
     command: Commands,
@@ -24,11 +32,15 @@ enum Commands {
 
 fn compose_yaml(source: &str, env: &str) -> Result<String> {
     let root: Value = serde_yaml::from_str(source).context("Invalid deployer.yml")?;
-    let environments = root.as_mapping().context("deployer.yml must be a YAML mapping")?;
+    let environments = root
+        .as_mapping()
+        .context("deployer.yml must be a YAML mapping")?;
     let selected = environments
         .get(Value::String(env.to_owned()))
         .with_context(|| format!("Environment '{env}' not found in deployer.yml"))?;
-    let mapping = selected.as_mapping().context("Environment must contain a Compose mapping")?;
+    let mapping = selected
+        .as_mapping()
+        .context("Environment must contain a Compose mapping")?;
     if !mapping.contains_key(Value::String("services".into())) {
         bail!("Environment '{env}' must define services");
     }
@@ -41,7 +53,8 @@ fn compose_yaml(source: &str, env: &str) -> Result<String> {
 
 fn write_managed(path: &Path, content: &str) -> Result<()> {
     if path.exists() {
-        let existing = fs::read_to_string(path).with_context(|| format!("Cannot read {}", path.display()))?;
+        let existing =
+            fs::read_to_string(path).with_context(|| format!("Cannot read {}", path.display()))?;
         if existing.lines().next() != Some(HEADER) {
             bail!("Refusing to overwrite unmanaged file: {}", path.display());
         }
@@ -58,26 +71,43 @@ fn write_managed(path: &Path, content: &str) -> Result<()> {
 }
 
 fn run(env: &str, args: &[String]) -> Result<i32> {
-    if !env.chars().all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_') || env.is_empty() {
+    if !env
+        .chars()
+        .all(|c| c.is_ascii_alphanumeric() || c == '-' || c == '_')
+        || env.is_empty()
+    {
         bail!("Environment name must contain only letters, digits, '-' or '_'");
     }
     let root = std::env::current_dir()?;
-    let source = fs::read_to_string(root.join("deployer.yml")).context("Cannot read deployer.yml")?;
+    let source =
+        fs::read_to_string(root.join("deployer.yml")).context("Cannot read deployer.yml")?;
     let yaml = compose_yaml(&source, env)?;
     let generated = root.join(GENERATED);
     write_managed(&generated, &yaml)?;
-    let project = format!("{}-{}", root.file_name().unwrap_or_default().to_string_lossy(), env)
-        .to_ascii_lowercase().replace('_', "-");
+    let project = format!(
+        "{}-{}",
+        root.file_name().unwrap_or_default().to_string_lossy(),
+        env
+    )
+    .to_ascii_lowercase()
+    .replace('_', "-");
     let env_file: PathBuf = root.join(format!(".env.{env}"));
     let mut command = Command::new("docker");
-    command.arg("compose")
-        .arg("--project-directory").arg(&root)
-        .arg("-p").arg(project)
-        .arg("-f").arg(&generated);
+    command
+        .arg("compose")
+        .arg("--project-directory")
+        .arg(&root)
+        .arg("-p")
+        .arg(project)
+        .arg("-f")
+        .arg(&generated);
     if env_file.is_file() {
         command.arg("--env-file").arg(env_file);
     }
-    let status = command.args(args).status().context("Failed to run docker compose")?;
+    let status = command
+        .args(args)
+        .status()
+        .context("Failed to run docker compose")?;
     Ok(status.code().unwrap_or(1))
 }
 
@@ -113,7 +143,11 @@ mod tests {
     }
     #[test]
     fn refuses_unmanaged_file() {
-        let path = std::env::temp_dir().join(format!("deployer-guard-{}-{}", std::process::id(), "test.yml"));
+        let path = std::env::temp_dir().join(format!(
+            "deployer-guard-{}-{}",
+            std::process::id(),
+            "test.yml"
+        ));
         fs::write(&path, "services: {}\n").unwrap();
         assert!(write_managed(&path, &format!("{HEADER}\nservices: {{}}\n")).is_err());
         assert_eq!(fs::read_to_string(&path).unwrap(), "services: {}\n");
