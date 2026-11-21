@@ -7,14 +7,14 @@ use std::{
     process::{Command, ExitCode},
 };
 
-const HEADER: &str = "# Managed by deployer CLI - DO NOT EDIT MANUALLY";
-const GENERATED: &str = ".deployer/compose.generated.yml";
+const HEADER: &str = "# Managed by tuggo CLI - DO NOT EDIT MANUALLY";
+const GENERATED: &str = ".tuggo/compose.generated.yml";
 
 #[derive(Parser)]
 #[command(
-    name = "deployer",
+    name = "tuggo",
     version,
-    about = "Multi-environment Docker Compose wrapper"
+    about = "Reproduce Docker Compose environments locally"
 )]
 struct Cli {
     #[command(subcommand)]
@@ -31,13 +31,13 @@ enum Commands {
 }
 
 fn compose_yaml(source: &str, env: &str) -> Result<String> {
-    let root: Value = serde_yaml::from_str(source).context("Invalid deployer.yml")?;
+    let root: Value = serde_yaml::from_str(source).context("Invalid tuggo.yml")?;
     let environments = root
         .as_mapping()
-        .context("deployer.yml must be a YAML mapping")?;
+        .context("tuggo.yml must be a YAML mapping")?;
     let selected = environments
         .get(Value::String(env.to_owned()))
-        .with_context(|| format!("Environment '{env}' not found in deployer.yml"))?;
+        .with_context(|| format!("Environment '{env}' not found in tuggo.yml"))?;
     let mapping = selected
         .as_mapping()
         .context("Environment must contain a Compose mapping")?;
@@ -80,7 +80,7 @@ fn run(env: &str, args: &[String]) -> Result<i32> {
     }
     let root = std::env::current_dir()?;
     let source =
-        fs::read_to_string(root.join("deployer.yml")).context("Cannot read deployer.yml")?;
+        fs::read_to_string(root.join("tuggo.yml")).context("Cannot read tuggo.yml")?;
     let yaml = compose_yaml(&source, env)?;
     let generated = root.join(GENERATED);
     write_managed(&generated, &yaml)?;
@@ -120,7 +120,7 @@ fn main() -> ExitCode {
         Ok(0) => ExitCode::SUCCESS,
         Ok(code) => ExitCode::from(u8::try_from(code).unwrap_or(1)),
         Err(error) => {
-            eprintln!("deployer: {error:#}");
+            eprintln!("tuggo: {error:#}");
             ExitCode::FAILURE
         }
     }
@@ -144,7 +144,7 @@ mod tests {
     #[test]
     fn refuses_unmanaged_file() {
         let path = std::env::temp_dir().join(format!(
-            "deployer-guard-{}-{}",
+            "tuggo-guard-{}-{}",
             std::process::id(),
             "test.yml"
         ));
