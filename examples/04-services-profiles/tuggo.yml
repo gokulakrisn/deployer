@@ -1,0 +1,32 @@
+# 04: Optional debugging tools via Docker Compose profiles.
+dev:
+  services:
+    cache:
+      image: redis:7-alpine
+      healthcheck:
+        test: ["CMD", "redis-cli", "ping"]
+        interval: 5s
+        timeout: 3s
+        retries: 5
+    worker:
+      image: redis:7-alpine
+      command: ["redis-cli", "-h", "cache", "ping"]
+      depends_on:
+        cache:
+          condition: service_healthy
+    inspector:
+      image: redis:7-alpine
+      command: ["redis-cli", "-h", "cache", "monitor"]
+      profiles: ["debug"]
+      depends_on:
+        cache:
+          condition: service_healthy
+test:
+  services:
+    cache:
+      image: redis:7-alpine
+    worker:
+      image: redis:7-alpine
+      command: ["redis-cli", "-h", "cache", "ping"]
+      depends_on:
+        - cache

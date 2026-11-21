@@ -79,8 +79,7 @@ fn run(env: &str, args: &[String]) -> Result<i32> {
         bail!("Environment name must contain only letters, digits, '-' or '_'");
     }
     let root = std::env::current_dir()?;
-    let source =
-        fs::read_to_string(root.join("tuggo.yml")).context("Cannot read tuggo.yml")?;
+    let source = fs::read_to_string(root.join("tuggo.yml")).context("Cannot read tuggo.yml")?;
     let yaml = compose_yaml(&source, env)?;
     let generated = root.join(GENERATED);
     write_managed(&generated, &yaml)?;
@@ -143,11 +142,8 @@ mod tests {
     }
     #[test]
     fn refuses_unmanaged_file() {
-        let path = std::env::temp_dir().join(format!(
-            "tuggo-guard-{}-{}",
-            std::process::id(),
-            "test.yml"
-        ));
+        let path =
+            std::env::temp_dir().join(format!("tuggo-guard-{}-{}", std::process::id(), "test.yml"));
         fs::write(&path, "services: {}\n").unwrap();
         assert!(write_managed(&path, &format!("{HEADER}\nservices: {{}}\n")).is_err());
         assert_eq!(fs::read_to_string(&path).unwrap(), "services: {}\n");

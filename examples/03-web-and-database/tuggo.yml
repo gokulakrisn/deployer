@@ -1,0 +1,47 @@
+# 03: An application-like stack with a persistent database.
+dev:
+  services:
+    db:
+      image: postgres:16-alpine
+      environment:
+        POSTGRES_USER: demo
+        POSTGRES_PASSWORD: local-only-password
+        POSTGRES_DB: demo
+      volumes:
+        - db_data:/var/lib/postgresql/data
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U demo -d demo"]
+        interval: 5s
+        timeout: 3s
+        retries: 10
+    admin:
+      image: adminer:4
+      ports:
+        - "8082:8080"
+      depends_on:
+        db:
+          condition: service_healthy
+  volumes:
+    db_data:
+test:
+  services:
+    db:
+      image: postgres:16-alpine
+      environment:
+        POSTGRES_USER: demo
+        POSTGRES_PASSWORD: test-only-password
+        POSTGRES_DB: demo
+      tmpfs:
+        - /var/lib/postgresql/data
+      healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U demo -d demo"]
+        interval: 5s
+        timeout: 3s
+        retries: 10
+    admin:
+      image: adminer:4
+      ports:
+        - "8083:8080"
+      depends_on:
+        db:
+          condition: service_healthy

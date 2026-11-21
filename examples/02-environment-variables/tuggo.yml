@@ -1,0 +1,15 @@
+# 02: Use .env.dev or .env.test to supply APP_PORT and GREETING.
+dev:
+  services:
+    app:
+      image: hashicorp/http-echo:1.0
+      command: ["-listen=:5678", "-text=${GREETING:-hello-dev}"]
+      ports:
+        - "${APP_PORT:-8080}:5678"
+test:
+  services:
+    app:
+      image: hashicorp/http-echo:1.0
+      command: ["-listen=:5678", "-text=${GREETING:-hello-test}"]
+      ports:
+        - "${APP_PORT:-8081}:5678"
