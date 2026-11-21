@@ -3,12 +3,9 @@ name: Release
 on:
   push:
     branches:
-      - feature/mvp-compose-cli
+      - feature/rename-tuggo
     tags:
       - 'v*'
-  pull_request:
-    branches: [main]
-    types: [opened, synchronize, reopened]
   workflow_dispatch:
 
 permissions:
@@ -20,7 +17,6 @@ concurrency:
 
 jobs:
   build:
-    if: github.event_name != 'pull_request' || (github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'feature/mvp-compose-cli')
     strategy:
       fail-fast: false
       matrix:
@@ -46,17 +42,17 @@ jobs:
       - name: Package Unix binary
         if: runner.os != 'Windows'
         shell: bash
-        run: tar -czf deployer-${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release deployer
+        run: tar -czf tuggo-${{ matrix.target }}.tar.gz -C target/${{ matrix.target }}/release tuggo
       - name: Package Windows binary
         if: runner.os == 'Windows'
         shell: pwsh
-        run: Compress-Archive -Path target/${{ matrix.target }}/release/deployer.exe -DestinationPath deployer-${{ matrix.target }}.zip
+        run: Compress-Archive -Path target/${{ matrix.target }}/release/tuggo.exe -DestinationPath tuggo-${{ matrix.target }}.zip
       - uses: actions/upload-artifact@v4
         with:
-          name: deployer-${{ matrix.target }}
+          name: tuggo-${{ matrix.target }}
           path: |
-            deployer-*.tar.gz
-            deployer-*.zip
+            tuggo-*.tar.gz
+            tuggo-*.zip
           if-no-files-found: error
 
   publish:
@@ -67,14 +63,14 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
-          pattern: deployer-*
+          pattern: tuggo-*
           merge-multiple: true
           path: dist
       - name: Create checksums
         shell: bash
         run: |
           cd dist
-          sha256sum deployer-* > SHA256SUMS
+          sha256sum tuggo-* > SHA256SUMS
       - name: Select release tag
         id: release
         env:
