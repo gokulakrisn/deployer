@@ -1,32 +1,32 @@
-# Deployer
+# Tuggo
 
-A lightweight Rust CLI for running **Docker Compose across multiple environments** from one `deployer.yml` file.
+A lightweight Rust CLI for **reproducing Docker Compose environments locally** from one `tuggo.yml` file.
 
-[![CI](https://github.com/gokulakrisn/deployer/actions/workflows/ci.yml/badge.svg)](https://github.com/gokulakrisn/deployer/actions/workflows/ci.yml)
-[![Release](https://github.com/gokulakrisn/deployer/actions/workflows/release.yml/badge.svg)](https://github.com/gokulakrisn/deployer/actions/workflows/release.yml)
+[![CI](https://github.com/gokulakrisn/tuggo/actions/workflows/ci.yml/badge.svg)](https://github.com/gokulakrisn/tuggo/actions/workflows/ci.yml)
+[![Release](https://github.com/gokulakrisn/tuggo/actions/workflows/release.yml/badge.svg)](https://github.com/gokulakrisn/tuggo/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> **Early preview:** This project is under active development. Try a [pre-release](https://github.com/gokulakrisn/deployer/releases) and report issues before using it for production deployments.
+> **Early preview:** This project is under active development. Try a [pre-release](https://github.com/gokulakrisn/tuggo/releases) and report issues for local development and testing; Tuggo is not a production deployment orchestrator.
 
-## Why Deployer?
+## Why Tuggo?
 
 Keep development, staging, and production Compose configurations together, then invoke the Docker Compose commands you already know:
 
 ```sh
-deployer compose dev up -d
-deployer compose stage logs -f
-deployer compose prod down
+tuggo compose dev up -d
+tuggo compose stage logs -f
+tuggo compose prod down
 ```
 
-Deployer selects the requested environment, writes a managed Compose configuration, and forwards the remaining arguments to `docker compose`.
+Tuggo selects the requested environment, writes a managed Compose configuration, and forwards the remaining arguments to `docker compose`.
 
 ## Features
 
-- **Single configuration file:** Define environments as top-level keys in `deployer.yml`.
+- **Single configuration file:** Define environments as top-level keys in `tuggo.yml`.
 - **Native Compose commands:** Forward arguments such as `up -d --build`, `ps`, `logs -f`, and `down`.
 - **Isolated project names:** Use a separate Compose project name for each environment.
 - **Optional environment variables:** Automatically use `.env.<environment>` when present.
-- **Managed output:** Refuse to overwrite an existing generated file without Deployer's ownership header.
+- **Managed output:** Refuse to overwrite an existing generated file without Tuggo's ownership header.
 - **Pre-release binaries:** Download builds for Linux, macOS, and Windows from GitHub Releases.
 
 ## Requirements
@@ -36,22 +36,22 @@ Deployer selects the requested environment, writes a managed Compose configurati
 
 ## Installation
 
-Download the archive for your operating system and architecture from the [GitHub Releases page](https://github.com/gokulakrisn/deployer/releases), extract it, and put the `deployer` executable (or `deployer.exe` on Windows) on your `PATH`.
+Download the archive for your operating system and architecture from the [GitHub Releases page](https://github.com/gokulakrisn/tuggo/releases), extract it, and put the `tuggo` executable (or `tuggo.exe` on Windows) on your `PATH`.
 
 Alternatively, build from source:
 
 ```sh
-git clone https://github.com/gokulakrisn/deployer.git
-cd deployer
+git clone https://github.com/gokulakrisn/tuggo.git
+cd tuggo
 git switch feature/mvp-compose-cli
 cargo build --release
 ```
 
-The executable will be at `target/release/deployer` (or `target/release/deployer.exe` on Windows).
+The executable will be at `target/release/tuggo` (or `target/release/tuggo.exe` on Windows).
 
 ## Quick start
 
-1. Create `deployer.yml` in your project directory:
+1. Create `tuggo.yml` in your project directory:
 
 ```yaml
 dev:
@@ -76,36 +76,36 @@ prod:
         - "8082:80"
 ```
 
-2. From the directory containing `deployer.yml`, run:
+2. From the directory containing `tuggo.yml`, run:
 
 ```sh
-deployer compose dev up -d
-deployer compose dev ps
-deployer compose dev logs -f
-deployer compose dev down
+tuggo compose dev up -d
+tuggo compose dev ps
+tuggo compose dev logs -f
+tuggo compose dev down
 ```
 
-You can also copy [the example configuration](examples/deployer.yml).
+You can also copy [the example configuration](examples/tuggo.yml).
 
 ## Command reference
 
 ```text
-deployer compose <environment> <docker-compose-arguments...>
+tuggo compose <environment> <docker-compose-arguments...>
 ```
 
 | Command | Purpose |
 | --- | --- |
-| `deployer compose dev up -d --build` | Build and start development services |
-| `deployer compose stage ps` | Show staging services |
-| `deployer compose prod logs -f` | Follow production logs |
-| `deployer compose prod down` | Stop and remove production services |
-| `deployer --help` | Show CLI help |
+| `tuggo compose dev up -d --build` | Build and start development services |
+| `tuggo compose stage ps` | Show staging services |
+| `tuggo compose prod logs -f` | Follow production logs |
+| `tuggo compose prod down` | Stop and remove production services |
+| `tuggo --help` | Show CLI help |
 
-The environment must exist as a top-level key in `deployer.yml` and contain a `services` mapping. Environment names may contain ASCII letters, digits, hyphens, and underscores.
+The environment must exist as a top-level key in `tuggo.yml` and contain a `services` mapping. Environment names may contain ASCII letters, digits, hyphens, and underscores.
 
 ### Environment-specific variables
 
-Create an optional `.env.dev`, `.env.stage`, or `.env.prod` alongside `deployer.yml`. Deployer passes the matching file to Docker Compose with `--env-file`.
+Create an optional `.env.dev`, `.env.stage`, or `.env.prod` alongside `tuggo.yml`. Tuggo passes the matching file to Docker Compose with `--env-file`.
 
 ```dotenv
 # .env.dev
@@ -116,17 +116,17 @@ Use standard Compose variable interpolation in the selected environment's config
 
 ### Generated files and project isolation
 
-Deployer writes the selected Compose YAML to:
+Tuggo writes the selected Compose YAML to:
 
 ```text
-.deployer/compose.generated.yml
+.tuggo/compose.generated.yml
 ```
 
-The file is regenerated on each invocation. Do not edit it manually. If an existing file lacks Deployer's management header, the CLI refuses to overwrite it.
+The file is regenerated on each invocation. Do not edit it manually. If an existing file lacks Tuggo's management header, the CLI refuses to overwrite it.
 
-Compose project names are based on the current directory name plus the environment, helping separate resources for `dev`, `stage`, and `prod`. Deployer explicitly passes `-f` to Compose rather than relying on automatic override-file discovery.
+Compose project names are based on the current directory name plus the environment, helping separate resources for `dev`, `stage`, and `prod`. Tuggo explicitly passes `-f` to Compose rather than relying on automatic override-file discovery.
 
-**Current limitation:** The generated path is shared by all environments, so simultaneous Deployer commands in the same project directory can interfere with one another. Avoid concurrent invocations until per-environment output and locking are implemented. Relative bind mounts and other path-sensitive Compose settings should be validated with `deployer compose <environment> config` before deployment.
+**Current limitation:** The generated path is shared by all environments, so simultaneous Tuggo commands in the same project directory can interfere with one another. Avoid concurrent invocations until per-environment output and locking are implemented. Relative bind mounts and other path-sensitive Compose settings should be validated with `tuggo compose <environment> config` before deployment.
 
 ## Development
 
@@ -141,7 +141,7 @@ The [CI workflow](.github/workflows/ci.yml) runs formatting, Clippy, and tests. 
 
 ## Contributing
 
-Issues, bug reports, and pull requests are welcome. Please include your operating system, Docker Compose version, reproduction steps, and the relevant (redacted) `deployer.yml` snippet.
+Issues, bug reports, and pull requests are welcome. Please include your operating system, Docker Compose version, reproduction steps, and the relevant (redacted) `tuggo.yml` snippet.
 
 ## License
 
