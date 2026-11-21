@@ -1,12 +1,12 @@
 [package]
-name = "compose-deployer"
+name = "tuggo"
 version = "0.1.0"
 edition = "2021"
-description = "Multi-environment Docker Compose CLI"
+description = "Reproduce Docker Compose environments locally"
 license = "MIT"
 
 [[bin]]
-name = "deployer"
+name = "tuggo"
 path = "src/main.rs"
 
 [dependencies]
