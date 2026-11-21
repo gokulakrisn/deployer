@@ -1,5 +1,5 @@
 /target/
-.deployer/
+.tuggo/
 .env
 .env.*
 !.env.example
