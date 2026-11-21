@@ -85,7 +85,7 @@ tuggo compose dev logs -f
 tuggo compose dev down
 ```
 
-You can also copy [the example configuration](examples/tuggo.yml).
+You can also copy [the example configuration](examples/tuggo.yml).\n\n## Learn with five progressive examples\n\nWork through the [examples guide](examples/README.md), from a single web server to a multi-service local stack with networks and persistent volumes:\n\n1. [Web server and environment selection](examples/01-web-server/tuggo.yml)\n2. [Per-environment variables](examples/02-environment-variables/tuggo.yml)\n3. [PostgreSQL, Adminer, health checks, and volumes](examples/03-web-and-database/tuggo.yml)\n4. [Optional debug profiles and service dependencies](examples/04-services-profiles/tuggo.yml)\n5. [Four-service stack with network and storage isolation](examples/05-multi-service-isolation/tuggo.yml)\n\nEach example is runnable from its own directory; see the guide for setup, commands, expected behavior, and cleanup.
 
 ## Command reference
 
