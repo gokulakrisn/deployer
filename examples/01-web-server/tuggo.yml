@@ -1,0 +1,13 @@
+# 01: Choose between two local web-server configurations.
+dev:
+  services:
+    web:
+      image: nginx:alpine
+      ports:
+        - "8080:80"
+test:
+  services:
+    web:
+      image: httpd:2.4-alpine
+      ports:
+        - "8081:80"
