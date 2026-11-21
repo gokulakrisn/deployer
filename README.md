@@ -2,11 +2,11 @@
 
 A lightweight Rust CLI for **reproducing Docker Compose environments locally** from one `tuggo.yml` file.
 
-[![CI](https://github.com/gokulakrisn/deployer/actions/workflows/ci.yml/badge.svg)](https://github.com/gokulakrisn/deployer/actions/workflows/ci.yml)
-[![Release](https://github.com/gokulakrisn/deployer/actions/workflows/release.yml/badge.svg)](https://github.com/gokulakrisn/deployer/actions/workflows/release.yml)
+[![CI](https://github.com/gokulakrisn/tuggo/actions/workflows/ci.yml/badge.svg)](https://github.com/gokulakrisn/tuggo/actions/workflows/ci.yml)
+[![Release](https://github.com/gokulakrisn/tuggo/actions/workflows/release.yml/badge.svg)](https://github.com/gokulakrisn/tuggo/actions/workflows/release.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-> **Early preview:** This project is under active development. Try a [pre-release](https://github.com/gokulakrisn/deployer/releases) and report issues for local development and testing; Tuggo is not a production deployment orchestrator.
+> **Early preview:** This project is under active development. Try a [pre-release](https://github.com/gokulakrisn/tuggo/releases) and report issues for local development and testing; Tuggo is not a production deployment orchestrator.
 
 ## Why Tuggo?
 
@@ -36,12 +36,12 @@ Tuggo selects the requested environment, writes a managed Compose configuration,
 
 ## Installation
 
-Download the archive for your operating system and architecture from the [GitHub Releases page](https://github.com/gokulakrisn/deployer/releases), extract it, and put the `tuggo` executable (or `tuggo.exe` on Windows) on your `PATH`.
+Download the archive for your operating system and architecture from the [GitHub Releases page](https://github.com/gokulakrisn/tuggo/releases), extract it, and put the `tuggo` executable (or `tuggo.exe` on Windows) on your `PATH`.
 
 Alternatively, build from source:
 
 ```sh
-git clone https://github.com/gokulakrisn/deployer.git
+git clone https://github.com/gokulakrisn/tuggo.git
 cd tuggo
 git switch feature/mvp-compose-cli
 cargo build --release
